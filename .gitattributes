@@ -1,0 +1,3 @@
+# Keep every file byte for byte as committed: the .bat files need CRLF line
+# endings and the Markdown guides use LF, so no line-ending conversion.
+* -text

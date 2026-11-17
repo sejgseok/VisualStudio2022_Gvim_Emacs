@@ -1,0 +1,10 @@
+# Build outputs (build.bat writes <source folder>\build\)
+build/
+
+# Visual Studio
+.vs/
+*.user
+
+# Casey Muratori's Handmade Hero .emacs copy (Molly Rocket, personal study only).
+# Copy it into 01.c_study for Emacs, but never commit it.
+handmade.emacs

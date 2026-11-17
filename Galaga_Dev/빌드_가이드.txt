@@ -1,0 +1,558 @@
+SPACE GALAGA: gvim 빌드·실행·테스트·디버깅 환경 사용자 가이드
+==========================================================
+
+대상 폴더: C:\Users\User\Dev\Galaga_Dev (Space_Galaga.sln)
+작성일: 2026-11-12
+
+이 문서는 Handmade Hero 공부에 쓰는 gvim 환경을 그대로 가져와서 Space Galaga
+솔루션을 gvim에서 편집하고, 빌드하고, 실행하고, 테스트하고, Visual Studio
+디버거로 디버깅하는 방법을 설명한다. 게임의 구조와 코드 설명은 같은 폴더의
+Galaga_가이드.txt를 본다.
+
+목차
+----
+ 1. 개요
+ 2. 준비물
+ 3. 추가한 파일
+ 4. 기본 작업 흐름
+ 5. gvim 시작하기
+ 6. 키와 명령 요약
+ 7. 빌드 (Alt+m)
+ 8. 실행과 종료 (F5, Ctrl+F5, Shift+F5)
+ 9. 구성 바꾸기 (:Config)
+10. 테스트 (F7)
+11. 디버깅 (F6, :DebugTests, :Solution)
+12. 오류 위치로 이동하기
+13. 이 프로젝트에 맞춘 편집 설정
+14. gvim 없이 명령줄에서 쓰기
+15. 자주 생기는 문제
+16. 확인한 것과 확인하지 않은 것
+
+
+1. 개요
+=======
+
+- 편집 환경은 Handmade Hero 작업 폴더의 gvim_handmade.vim을 그대로 쓴다.
+  글꼴(JetBrainsMono Nerd Font Mono 12, Ctrl+마우스 휠로 크기 변경), 다크
+  테마, Alt 키 편집 명령, F9~F11 오류 이동이 Handmade 폴더와 같다.
+- 그 위에 misc\gvim_galaga.vim이 Space_Galaga.sln에 맞는 빌드, 실행, 테스트,
+  디버깅을 연결한다.
+- 빌드는 MSBuild로 Space_Galaga.sln을 빌드한다. Visual Studio가 빌드할 때와
+  설정(Space_Galaga.vcxproj)과 출력 폴더(bin\, obj\)가 같다. gvim에서
+  빌드한 exe를 Visual Studio에서 디버깅할 수 있고, 그 반대도 된다.
+- 디버깅은 Visual Studio 2022 디버거로 한다. Handmade 폴더의 F6과 같은
+  방식이다. 이 PC에는 콘솔 디버거(cdb)가 설치되어 있지 않다.
+- 게임 소스(Space_Galaga\main.c, game.c, game.h), 테스트(tests\game_tests.c),
+  솔루션과 프로젝트 파일, README.md, AGENTS.md, .gitignore는 바꾸지 않았다.
+
+
+2. 준비물
+=========
+
+이 PC에는 모두 설치되어 있다.
+
+  Visual Studio 2022   'C++를 사용한 데스크톱 개발' 워크로드를 설치한다.
+  Vim 9.x (gvim)       C:\Program Files\Vim\vim92
+  gvim_handmade.vim    E:\Work\Dev\02.handmade_dev\01.Dev_work\gvim_handmade.vim
+  글꼴                 JetBrainsMono Nerd Font Mono (없으면 Consolas로 표시)
+
+gvim.bat은 gvim_handmade.vim을 다음 순서로 찾는다.
+  ① 이 폴더(Galaga_Dev)의 gvim_handmade.vim
+  ② E:\Work\Dev\02.handmade_dev\01.Dev_work\gvim_handmade.vim
+  ③ E:\Work\Dev\01.c_study\gvim_handmade.vim
+보통은 ②가 쓰이므로 Handmade 작업 폴더의 파일을 고치면 Galaga에도 바로
+적용된다. 다른 파일을 쓰려면 gvim.bat의 set "hh_vim=" 뒤에 전체 경로를 쓴다.
+
+gvim_handmade.vim은 이 폴더에 복사하지 않고 원래 위치의 파일을 읽는다. 그래서
+Handmade 작업 폴더의 파일을 고치면 Galaga에도 바로 적용된다.
+
+GitHub 저장소(VisualStudio2022_Gvim_Emacs)에서 받았다면 그 안의 01.c_study를
+E:\Work\Dev\01.c_study에 두면 ③이 쓰인다. 다른 곳에 두었다면
+01.c_study\gvim_handmade.vim을 이 폴더에 복사해 ①이 쓰이게 하거나, gvim.bat의
+set "hh_vim=" 뒤에 그 파일의 전체 경로를 쓴다. 다른 PC에서는
+Gvim_개발환경구축_설정파일.zip이 이 폴더에 gvim_handmade.vim을 함께 넣어 ①이
+쓰인다 (Gvim_개발환경구축_가이드.docx 8장).
+
+
+3. 추가한 파일
+==============
+
+  gvim.bat               gvim을 이 솔루션용 설정으로 시작한다.
+  build.bat              게임을 빌드한다 (MSBuild, Space_Galaga.sln).
+  test.bat               테스트를 빌드하고 실행한다 (cl).
+  misc\shell.bat         Visual Studio 2022 x64 개발 환경을 설정한다.
+  misc\gvim_galaga.vim   Galaga용 gvim 설정 (빌드·실행·테스트·디버깅 키).
+  빌드_가이드.txt         이 문서.
+
+.bat과 .vim 파일은 영문(ASCII) 텍스트이다. 빌드 결과는 이미 .gitignore에
+있는 bin\과 obj\에만 생긴다.
+
+
+4. 기본 작업 흐름
+=================
+
+  ① gvim.bat을 실행한다.               (5장)
+  ② 소스를 고친다.
+  ③ Alt+m으로 빌드한다.                (7장, 모든 파일이 자동 저장된다)
+  ④ 오류가 있으면 F9로 첫 오류에 가서 고치고 다시 Alt+m.   (12장)
+  ⑤ Ctrl+F5로 빌드하고 실행하거나, F5로 실행한다.          (8장)
+  ⑥ 규칙을 바꿨으면 F7로 테스트한다.   (10장)
+  ⑦ 동작을 자세히 보려면 F6으로 Visual Studio 디버거를 연다.  (11장)
+
+
+5. gvim 시작하기
+================
+
+탐색기에서 C:\Users\User\Dev\Galaga_Dev\gvim.bat을 더블클릭하거나,
+PowerShell에서 다음처럼 실행한다.
+
+  Set-Location C:\Users\User\Dev\Galaga_Dev
+  .\gvim.bat                         Space_Galaga\main.c를 연다
+  .\gvim.bat Space_Galaga\game.c     지정한 파일을 연다 (새 파일도 된다)
+
+gvim.bat이 하는 일
+  - misc\shell.bat으로 Visual Studio 2022 x64 개발 환경을 설정한다.
+    (cl, msbuild, devenv의 경로가 gvim과 빌드에 전달된다.)
+  - gvim_handmade.vim과 misc\gvim_galaga.vim을 불러 gvim을 시작한다.
+    개인 _vimrc는 읽지 않는다.
+  - 창을 최대화하고 좌우 두 창으로 나눈다. 작업 폴더는 Galaga_Dev이다.
+
+시작 메뉴의 gVim이나 gvim.exe를 바로 실행하면 이 설정이 적용되지 않는다.
+반드시 gvim.bat으로 시작한다.
+
+상태 줄 오른쪽에 다음이 표시된다.
+
+  [Debug x64]  build ok  tests ok  259:5  17:20
+
+  [Debug x64]   현재 구성과 플랫폼 (9장)
+  build ...     마지막 빌드 결과: building... / build ok / build FAILED
+  tests ...     마지막 테스트 결과: testing... / tests ok / tests FAILED
+  259:5         커서의 줄:열
+  17:20         현재 시각
+
+다른 파일을 열 때는 Alt+f 다음에 경로를 입력한다. Tab으로 완성된다.
+  Alt+f tests\game_tests.c Enter
+
+
+6. 키와 명령 요약
+=================
+
+빌드·실행·테스트·디버깅 (이 솔루션용)
+  Alt+m        현재 구성으로 솔루션 빌드 (수정한 파일을 모두 저장한 뒤)
+  Ctrl+F5      빌드하고, 성공하면 실행
+  F5           현재 구성의 게임 실행
+  Shift+F5     실행 중인 Space_Galaga.exe 종료
+  F6           현재 구성의 exe를 Visual Studio 디버거로 열기
+  F7           테스트 빌드와 실행 (:Test와 같다)
+  :Config Release x86   구성 바꾸기. 인수 없이 :Config는 현재 구성 표시
+  :DebugTests  테스트 프로그램을 Visual Studio 디버거로 열기
+  :Solution    Space_Galaga.sln을 Visual Studio로 열기
+
+오류 이동
+  F9           첫 번째 오류 위치
+  F11 / Alt+n  다음 오류
+  F10 / Alt+Shift+n   이전 오류
+  Alt+k        (quickfix 창에서) 창 닫기
+
+이 프로젝트에 맞게 바꾼 편집 키 (13장)
+  Alt+j        현재 파일의 함수 목록
+  Alt+e        코드 조각 펼치기 (if, else, for, while, switch, case, struct, inc)
+
+Handmade gvim 환경과 같은 키 (일부)
+  Alt+s 저장, Alt+f 파일 열기, Alt+b 버퍼 전환, Alt+k 버퍼 닫기,
+  Alt+w 다른 창으로, Alt+c 또는 F12 game.c ↔ game.h, F4 커서 단어를
+  솔루션 전체에서 찾기, Alt+; 주석 켜기/끄기, Alt+u 되돌리기,
+  Ctrl+x Ctrl+c gvim 종료, Ctrl+마우스 휠 글꼴 크기.
+  전체 목록은 E:\Work\Dev\02.handmade_dev\01.Dev_work\gvim_빌드가이드.txt를
+  본다.
+
+
+7. 빌드 (Alt+m)
+===============
+
+Alt+m을 누르면 수정한 파일을 모두 저장하고 build.bat을 백그라운드에서 실행한다.
+아래쪽에 quickfix 창(12줄)이 열리고 출력이 표시된다. 빌드하는 동안에도
+편집할 수 있다.
+
+build.bat은 misc\shell.bat으로 Visual Studio 환경을 설정한 뒤 다음과 같이
+MSBuild를 실행한다 (구성과 플랫폼은 gvim의 현재 값).
+
+  msbuild Space_Galaga.sln -m -v:minimal -p:Configuration=Debug -p:Platform=x64
+
+컴파일 옵션은 Space_Galaga.vcxproj에 있는 그대로이다: C17, /W4 /WX,
+/utf-8, UNICODE. /WX 때문에 경고 하나도 빌드 실패가 된다.
+
+결과 파일 위치
+
+  Debug   x64   bin\x64\Debug\Space_Galaga.exe     (중간 파일 obj\x64\Debug)
+  Release x64   bin\x64\Release\Space_Galaga.exe
+  Debug   x86   bin\Win32\Debug\Space_Galaga.exe
+  Release x86   bin\Win32\Release\Space_Galaga.exe
+
+솔루션의 x86 구성은 프로젝트 안에서 Win32 플랫폼이므로 폴더 이름이 Win32이다.
+
+성공했을 때의 출력
+
+  Building Space_Galaga Debug x64
+    main.c
+    game.c
+    코드를 생성하고 있습니다...
+    Space_Galaga.vcxproj -> C:\Users\User\Dev\Galaga_Dev\bin\x64\Debug\Space_Galaga.exe
+  Built bin\x64\Debug\Space_Galaga.exe
+  -- Build succeeded.
+
+바뀐 소스가 없으면 main.c, game.c 줄 없이 바로 끝난다 (증분 빌드).
+Visual Studio로 빌드한 뒤 gvim에서 처음 빌드하면 두 파일을 한 번 다시
+컴파일할 수 있다. 2026-11-12에 그렇게 한 번 다시 컴파일했고, 그다음
+빌드부터는 증분으로 끝났다.
+
+게임이 실행 중이거나 Visual Studio에서 디버깅 중이면 exe 파일이 잠겨 있어
+링크할 수 없다. 이때 build.bat은 빌드하지 않고 다음과 같이 알린다.
+
+  Space_Galaga.exe (Debug x64) is running. Close it (Shift+F5 in gvim,
+  or stop debugging in Visual Studio) and build again.
+
+빌드 출력의 한글: MSBuild는 메시지를 UTF-8로, cmd와 cl은 CP949로 출력한다.
+gvim_galaga.vim은 줄마다 이를 구분해서 한글을 바르게 표시한다. Handmade
+환경의 원래 Alt+m은 CP949만 가정하여 MSBuild의 한글이 깨지므로, 이 솔루션에서는
+Alt+m을 Galaga용 빌드로 바꿨다.
+
+
+8. 실행과 종료 (F5, Ctrl+F5, Shift+F5)
+======================================
+
+F5
+  현재 구성의 exe를 실행한다. 작업 폴더는 Space_Galaga\이다. Visual Studio가
+  솔루션에서 실행할 때와 같은 폴더이다. 지금 게임은 파일을 읽지 않으므로
+  작업 폴더의 영향은 없다.
+  - exe가 없으면: Nothing to run: bin\x64\Debug\Space_Galaga.exe. Build it
+    first (Alt+m).
+  - 소스가 exe보다 나중에 고쳐졌으면 노란 경고와 함께 예전 exe를 실행한다:
+    Running ..., which is older than the source. Alt+m rebuilds it.
+
+Ctrl+F5
+  빌드하고, 성공했을 때만 실행한다. 실패하면 실행하지 않고 오류 목록을
+  보여 준다.
+
+Shift+F5
+  이름이 Space_Galaga.exe인 프로세스를 모두 강제로 종료한다. Visual Studio에서
+  디버깅 중인 게임도 함께 종료된다. 게임 창에서 Esc를 눌러 끝내도 된다.
+
+게임 창은 1200×1350 크기를 요청하고, 화면보다 크면 최대화된다. F11은 게임의
+전체 화면 전환이다 (gvim의 F11과 다른 창이다). 게임 조작은 README.md와
+Galaga_가이드.txt 1장을 본다.
+
+
+9. 구성 바꾸기 (:Config)
+========================
+
+gvim은 Debug x64로 시작한다. 구성은 :Config 명령으로 바꾼다. 대소문자는
+구분하지 않으며 Tab으로 완성된다.
+
+  :Config Release          Release x64
+  :Config x86              현재 구성의 32비트
+  :Config Debug x64        처음 상태
+  :Config                  현재 구성과 exe 경로 표시
+
+바꾸면 Alt+m, Ctrl+F5, F5, F6이 모두 새 구성을 쓴다. 상태 줄의 빌드 결과는
+지워진다 (새 구성은 아직 빌드하지 않았기 때문이다). 테스트(F7)는 구성과
+관계없이 항상 같은 방식으로 빌드된다.
+
+  Debug     최적화 없음, 디버그 C 런타임(/MTd), 런타임 검사(/RTC1).
+            디버깅은 이 구성으로 한다.
+  Release   속도 최적화와 전체 프로그램 최적화, C 런타임 정적 연결(/MT).
+            다른 PC에서 실행할 exe는 이 구성으로 만든다.
+
+
+10. 테스트 (F7)
+===============
+
+F7(또는 :Test)을 누르면 test.bat이 다음을 한다.
+  ① tests\game_tests.c와 Space_Galaga\game.c를 cl로 컴파일한다.
+  ② bin\tests\game_tests.exe를 만들어 실행한다. 창은 열리지 않는다.
+결과는 quickfix 창과 상태 줄(tests ok / tests FAILED)에 나온다.
+
+컴파일 옵션은 README.md의 테스트 명령과 같고, 다음 네 가지를 더했다.
+  /FC                  메시지에 파일의 전체 경로 (gvim이 파일을 찾도록)
+  /diagnostics:column  열 번호도 표시 (Visual Studio와 같게)
+  /Z7, /DEBUG          디버깅 정보 (bin\tests\game_tests.pdb, :DebugTests용)
+
+통과했을 때의 출력
+
+  game_tests.c
+  game.c
+  Running bin\tests\game_tests.exe
+  PASS: movement, pause/focus, power-up, damage, restart, collision, waves,
+  boss, 10-minute simulation
+  ---- game_tests.exe exited with code 0 ----
+  -- Tests passed.
+
+assert가 실패했을 때 (예: 18행의 기대값 40을 41로 바꿔 시험했을 때)
+  - 출력에 다음 줄이 나오고, quickfix가 이 줄을 오류 위치로 인식한다.
+      Assertion failed: game.stage == 1 && game.enemyCount == 41,
+      file C:\Users\User\Dev\Galaga_Dev\tests\game_tests.c, line 18
+  - 동시에 "Microsoft Visual C++ Runtime Library" 창이 뜬다.
+      Debug Error! ... abort() has been called
+      (Press Retry to debug the application)
+      [중단(A)] [다시 시도(R)] [무시(I)]
+    디버그 C 런타임(/MTd)의 기본 동작이며 README.md의 명령으로 빌드해도 같다.
+  - 중단(A)을 누르면 테스트 프로그램이 끝나고 gvim에 Tests FAILED가 표시된다.
+    F9로 실패한 assert 줄에 간다.
+  - 이 창을 닫기 전까지 상태 줄은 testing...이고, F7을 다시 누르면
+    A test run is already running.이 나온다.
+  - 다시 시도(R)는 이 자리에서 디버거를 연결하는 버튼이다 (이번에 눌러 보지는
+    않았다). 실패 원인을 차분히 보려면 중단(A)으로 끝낸 뒤 :DebugTests로
+    디버깅하는 편이 확실하다 (11장).
+
+테스트는 게임 빌드와 별개이다. game.c를 고쳤다면 Alt+m(게임)과 F7(테스트)을
+둘 다 해 본다. 테스트 내용은 Galaga_가이드.txt 18장에 설명되어 있다.
+
+
+11. 디버깅 (F6, :DebugTests, :Solution)
+=======================================
+
+11-1. F6: gvim에서 빌드한 exe를 Visual Studio 디버거로 열기
+
+F6은 현재 구성의 exe를 다음 명령으로 연다 (Handmade 폴더의 F6과 같은 방식).
+
+  devenv.exe /DebugExe C:\Users\User\Dev\Galaga_Dev\bin\x64\Debug\Space_Galaga.exe
+
+Visual Studio가 열려도 게임은 바로 실행되지 않는다. 순서는 다음과 같다.
+
+  ① gvim에서 Debug x64로 빌드한다 (Alt+m). Release는 최적화 때문에 변수
+     값이 보이지 않거나 줄 이동이 건너뛰므로 디버깅에는 Debug를 쓴다.
+  ② F6을 누른다. Visual Studio가 열리고 Space_Galaga.exe가 디버깅 대상이 된다.
+     소스가 exe보다 새로우면 gvim에 "The exe is older than the source.
+     Build it (Alt+m) before you start debugging."이 표시된다.
+  ③ 중단점을 건다.
+     파일(F) > 열기(O) > 파일(F)...로 C:\Users\User\Dev\Galaga_Dev\Space_Galaga\
+     game.c를 열고, 멈출 줄의 왼쪽 회색 여백을 클릭한다.
+     파일을 열지 않고 F11을 누르면 wWinMain에서 멈추면서 소스가 열린다.
+  ④ 도구 모음의 초록색 ▶ 시작 버튼을 누른다 (디버그 > 디버깅 시작).
+  ⑤ 멈추면 다음을 쓴다.
+       F10        프로시저 단위 실행 (한 줄씩, 함수 안으로 들어가지 않음)
+       F11        한 단계씩 코드 실행 (함수 안으로 들어감)
+       Shift+F11  프로시저 나가기
+       Shift+F5   디버깅 중지
+     지역, 조사식, 호출 스택 창은 디버그 > 창 메뉴에서 연다.
+  ⑥ 코드를 고칠 때는 Visual Studio에서 디버깅을 중지(Shift+F5)하고, gvim에서
+     고친 뒤 Alt+m으로 빌드하고, Visual Studio에서 다시 ▶ 시작을 누른다.
+     /DebugExe로 연 Visual Studio는 빌드하지 않는다. 디버깅 중에는 exe가
+     잠겨 있어 gvim의 빌드가 거부된다 (7장의 메시지).
+
+이 PC의 Visual Studio 키보드 설정에서는 Ctrl+O, F5, F9, Ctrl+S가 빠져 있다.
+그래서 위에서는 메뉴, 여백 클릭, ▶ 시작 버튼을 썼다. F10, F11, Shift+F5는
+동작한다. 단축키를 되살리는 방법은 Handmade 폴더의
+handmade_hero_day_002_source\빌드_doc.txt 6-5를 본다.
+
+/DebugExe 세션은 실행 파일만 연 것이라 프로젝트가 없다. 속성 관리자에
+"Visual C++ 프로젝트가 로드되지 않았습니다."가 나오거나 도구 모음의 구성 칸이
+비어 있어도 정상이다. Visual Studio를 닫을 때 솔루션 저장 여부를 물으면
+저장하지 않아도 된다. F6은 매번 새로 연다. 중단점을 계속 유지하려면 11-3의
+:Solution 방식이 편하다.
+
+처음 걸어 볼 만한 중단점 (game.c 줄 번호, 2026-11-12 기준)
+
+  102   StartGame       새 게임 시작 (Enter)
+  149   DamagePlayer    플레이어가 맞았을 때
+  162   DestroyEnemy    적을 격파했을 때
+  259   GameUpdate      Space로 발사하는 분기
+
+GameUpdate는 1초에 120번 호출되므로 무조건 멈추면 진행이 어렵다. 중단점의
+빨간 점을 오른쪽 클릭 > 조건...에서 g->lives == 1 같은 조건을 건다.
+조사식에는 g->mode, g->lives, g->enemyCount, g->powerTime 등을 넣는다.
+
+디버깅할 때 알아 둘 게임 동작
+  - Visual Studio로 전환하면 게임 창이 포커스를 잃어 자동으로 일시정지한다
+    (WM_KILLFOCUS → GameFocusLost). 계속하려면 게임 창에서 P를 누른다.
+  - 중단점에서 오래 멈췄다가 계속해도, Tick이 한 번에 처리하는 시간을
+    0.1초로 제한하므로 게임이 순간이동하지 않는다 (main.c Tick).
+
+11-2. :DebugTests: 테스트 프로그램 디버깅
+
+:DebugTests는 bin\tests\game_tests.exe를 같은 방식(/DebugExe)으로 연다.
+먼저 F7로 테스트를 한 번 빌드해 둔다. tests\game_tests.c를 열어 실패한
+assert 줄이나 Reset 함수에 중단점을 걸고 ▶ 시작을 누른다. 콘솔 창이 함께
+열린다.
+
+11-3. :Solution: Visual Studio에서 솔루션 열기
+
+:Solution은 Space_Galaga.sln을 Visual Studio로 연다. Visual Studio의 기능을
+모두 쓸 수 있다.
+  - Visual Studio가 직접 빌드한다 (빌드 > 솔루션 빌드). 디버그 > 디버깅 시작은
+    필요하면 빌드한 뒤 실행한다.
+  - 구성(Debug/Release, x64/x86)은 Visual Studio 도구 모음에서 고른다. gvim의
+    :Config와는 따로이다.
+  - 중단점이 솔루션의 .vs 폴더에 저장되어 다음에도 유지된다.
+  - gvim과 같은 bin\, obj\를 쓰므로 어느 쪽에서 빌드해도 된다.
+
+F6은 gvim의 구성 그대로 빠르게 열고 빌드는 gvim에서 하는 방식이고,
+:Solution은 Visual Studio에서 빌드와 디버깅을 모두 하는 방식이다.
+
+
+12. 오류 위치로 이동하기
+========================
+
+빌드와 테스트 출력은 quickfix 창에 쌓인다. 오류, 경고, 실패한 assert 줄은
+파일과 줄, 열로 인식된다.
+
+  F9                  첫 번째 오류 위치로
+  F11 / Alt+n         다음 오류
+  F10 / Alt+Shift+n   이전 오류
+  quickfix 창에서 Enter   그 줄의 위치로
+  Alt+k               quickfix 창에서 누르면 창을 닫는다 (:cclose와 같다)
+
+quickfix 창에서는 다음처럼 보인다 (오류를 넣어 시험한 예).
+
+  Space_Galaga\game.c|15 col 23 error 2065| 'missingName': 선언되지 않은 식별자입니다.
+  tests\game_tests.c|18| game.stage == 1 && game.enemyCount == 41
+
+/WX 설정 때문에 경고(warning)도 빌드를 실패시키므로 목록의 경고도 고친다.
+
+
+13. 이 프로젝트에 맞춘 편집 설정
+================================
+
+Space Galaga의 코드 스타일(AGENTS.md)은 Casey의 Handmade Hero 스타일과 다르다.
+misc\gvim_galaga.vim은 C 파일에 다음을 바꾼다. 나머지 편집 기능(괄호 자동
+닫기, Tab 완성, Alt+; 주석 등)은 Handmade 환경과 같다.
+
+들여쓰기 (cinoptions)
+  - if, for, while, switch의 중괄호는 같은 줄에 둔다.
+  - case는 switch와 같은 열, case 아래 문장은 한 단계 안쪽.
+  - 여러 줄에 걸친 함수 호출의 다음 줄은 한 단계(4칸) 안쪽.
+  이 설정으로 소스 네 파일 전체를 = 로 다시 들여쓰면 1줄만 바뀐다
+  (tests\game_tests.c 31행, 중첩된 괄호의 줄). Handmade 설정 그대로면 38줄이
+  바뀐다.
+
+Alt+e 코드 조각 (단어 끝에서 누른다. 커서는 첫 빈칸에 놓인다)
+  if       if () {            else    (} else 뒤에서) } else {
+               ...                         ...
+           }                           }
+  for      for (i = 0; i < ; ++i) {     while   while () {
+  switch   switch () {                  case    case :
+           case :                                   ...
+               break;                               break;
+           default:
+               break;
+           }
+  struct   typedef struct  {            inc     #include <>
+               ...
+           } ;
+  for 조각은 이 코드처럼 함수 첫머리에 int i;가 선언되어 있다고 본다.
+
+Alt+j 함수 목록
+  반환형이 같은 줄에 있는 이 코드의 함수 정의를 찾는다. main.c에서는
+  ToggleFullscreen, PaintGame, Tick, WindowProc, wWinMain 5개가 나온다.
+  목록 창에서 Enter로 이동한다.
+
+새 헤더 파일
+  Alt+f로 새 .h 파일을 열면 game.h와 같은 형식의 include guard가 들어간다.
+    #ifndef SPACE_GALAGA_SOUND_H
+    #define SPACE_GALAGA_SOUND_H
+
+    #endif
+
+파일 형식
+  소스는 UTF-8(BOM 없음)이고 줄 끝은 LF이다. gvim은 연 파일의 인코딩과 줄 끝을
+  그대로 유지해서 저장한다. Alt+s로 저장하면 탭이 공백으로 바뀐다.
+
+
+14. gvim 없이 명령줄에서 쓰기
+=============================
+
+build.bat과 test.bat은 Visual Studio 환경을 스스로 설정하므로 일반 PowerShell이나
+cmd에서 실행할 수 있다 (README.md의 msbuild, cl 명령은 Developer PowerShell이
+필요하다).
+
+  Set-Location C:\Users\User\Dev\Galaga_Dev
+  .\build.bat                    Debug x64
+  .\build.bat Release            Release x64
+  .\build.bat Debug x86          32비트 (bin\Win32\Debug)
+  .\test.bat                     테스트 빌드와 실행
+  .\bin\x64\Debug\Space_Galaga.exe
+  $LASTEXITCODE                  0이면 성공
+
+잘못된 인수를 주면 다음처럼 알리고 끝난다.
+  Unknown configuration "Fast". Use Debug or Release.
+  Unknown platform "arm64". Use x64 or x86.
+
+cl, msbuild, devenv를 직접 쓰고 싶으면 개발자 명령 창을 연다.
+  cmd.exe /k misc\shell.bat
+
+
+15. 자주 생기는 문제
+====================
+
+[gvim_handmade.vim was not found. Put its full path after hh_vim= in gvim.bat.]
+  Handmade 작업 폴더가 옮겨졌거나 다른 PC이다. gvim.bat의 set "hh_vim=" 뒤에
+  gvim_handmade.vim의 전체 경로를 쓴다.
+
+[gvim was not found ...]
+  Vim 9가 C:\Program Files\Vim\vim9* 이외에 설치되었다. gvim.bat의
+  set "gvim_gui=" 뒤에 gvim.exe의 전체 경로를 쓴다.
+
+[Visual Studio 2022 C++ tools were not found.]
+  Visual Studio 2022의 'C++를 사용한 데스크톱 개발' 워크로드가 없거나 다른
+  위치에 설치되었다. 다른 위치라면 misc\shell.bat의 set "vcvars=" 뒤에
+  vcvarsall.bat의 전체 경로를 쓴다.
+
+[DevEnvDir is not set. Start gvim with gvim.bat.]
+  gvim을 gvim.bat 없이 시작했다. gvim을 닫고 gvim.bat으로 다시 시작한다.
+
+[Space_Galaga.exe (...) is running. Close it ...]
+  게임이 실행 중이거나 Visual Studio에서 디버깅 중이다. Shift+F5로 끝내거나
+  Visual Studio에서 디버깅을 중지한 뒤 다시 빌드한다.
+
+[A build is already running. / A test run is already running.]
+  앞의 빌드나 테스트가 끝나지 않았다. 테스트라면 Debug Error 창이 떠 있는지
+  확인한다 (10장).
+
+[Nothing to run: ... Build it first (Alt+m).]
+  현재 구성으로는 아직 빌드하지 않았다. :Config로 구성을 확인한다.
+
+[고쳤는데 게임이 그대로이다]
+  빌드가 실패했거나(상태 줄 build FAILED) 다른 구성의 exe를 실행했다.
+  :Config로 구성을 확인하고 Ctrl+F5로 빌드와 실행을 함께 한다.
+
+[빌드 출력의 한글이 깨진다]
+  gvim.bat으로 시작한 gvim인지 확인한다. Galaga용 빌드(7장)가 아니면 MSBuild의
+  UTF-8 출력이 깨진다.
+
+[Alt 키가 메뉴로 간다, 글꼴이나 색이 다르다]
+  gvim.bat 없이 시작한 gvim이다.
+
+
+16. 확인한 것과 확인하지 않은 것 (2026-11-12)
+=============================================
+
+확인한 것 (오류를 넣는 시험은 임시 폴더의 복사본에서만 했다)
+  - build.bat: Debug/Release × x64/x86 네 구성 모두 빌드 성공, 결과 폴더
+    확인. 잘못된 인수의 메시지. 게임이 실행 중일 때 빌드를 거부하는 메시지.
+  - 오류를 넣은 복사본: gvim의 quickfix에 game.c 15행 23열과 한글 메시지가
+    바르게 표시되고 F9로 이동.
+  - test.bat: 통과(종료 코드 0), 컴파일 오류, 실패한 assert. assert 줄이
+    위치로 인식되고 Debug Error 창이 뜨는 것을 확인했다 (창은 버튼을 누르지
+    않고 프로세스를 종료해서 닫았다).
+  - gvim.bat으로 시작한 gvim: 작업 폴더, 두 창, 글꼴, 상태 줄, Alt+m, F7,
+    :Config Release x86 후 Ctrl+F5 (bin\Win32\Release의 exe 실행),
+    Shift+F5 종료, F5 (bin\x64\Debug의 exe 실행), Alt+j, 빌드 후 MSBuild
+    프로세스가 남지 않는 것.
+  - F6, :DebugTests, :Solution: 명령줄을 기록하는 시험용 devenv.exe로
+    넘어가는 명령을 확인했다 (/DebugExe와 exe 경로, .sln 경로).
+    빌드한 exe마다 .pdb가 연결된 것을 dumpbin으로 확인했다.
+  - Alt+e 코드 조각, 새 헤더, 들여쓰기 설정 (Vim으로 자동 시험).
+  - 실제 폴더(C:\Users\User\Dev\Galaga_Dev): build.bat(Debug x64)과 test.bat을
+    실행해 성공했다. 그래서 bin\x64\Debug, obj\x64\Debug, bin\tests,
+    obj\tests의 파일이 새로 만들어졌다.
+
+확인하지 않은 것
+  - Visual Studio 창을 실제로 열어 중단점에서 멈추는 것 (F6, :DebugTests,
+    :Solution). 넘어가는 명령줄과 .pdb만 확인했다.
+  - Debug Error 창의 중단(A), 다시 시도(R) 버튼.
+  - 실제 키보드로 게임을 조작하는 것.
+  - 실제 폴더에서 gvim 화면을 띄우는 것 (gvim 시험은 같은 파일을 복사한
+    임시 폴더에서 했다).
+  - 실제 다른 PC. gvim.bat의 ②, ③ 경로는 이 PC의 E: 드라이브 기준이므로 다른
+    PC에서는 이 폴더의 gvim_handmade.vim(①)을 쓴다 (2장). 같은 PC의 다른 폴더에
+    풀어서 한 시험은 Gvim_개발환경구축_가이드.docx의 검증 기록에 있다.
