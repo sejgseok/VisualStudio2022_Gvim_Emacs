@@ -27,6 +27,7 @@ Emacs를 쓰려면 저장소에 없는 `handmade.emacs`를 따로 넣어야 한�
 | 연습 파일 | `01_hello.c`, `exam-1.c`, `exam-2.c`, `exam-3.c`, `test.c`, `c%`, `c\exam-1.c`, `c\exam-2.c`, `c\exam-3.c` |
 | `C_C++_개발환경_구축가이드.docx` | 설치부터 디버깅까지 정리한 Word 가이드(49쪽, 부록에 설정 파일 전문) |
 | `C_C++_빌드가이드.txt` | gvim 사용법과 키 전체 |
+| `Gvim_키보드가이드.docx` | gvim 키를 키보드만으로 쓰는 방법으로 정리한 Word 가이드(34쪽): 모드, 빌드·실행, 이동, 선택, 복사·삭제, 자동 완성·주석, 검색·치환, 자주 쓰는 작업 순서, Emacs 키 비교 |
 | `Emacs_C_C++_가이드.md`, `Emacs_키보드가이드.md` | Emacs 사용법과 키 전체 |
 
 ## 새 PC에 설치하기
@@ -64,7 +65,7 @@ Emacs를 쓰려면 저장소에 없는 `handmade.emacs`를 따로 넣어야 한�
 
 ## 자주 쓰는 키
 
-대상은 마지막으로 연 `.c` 또는 `.cpp` 파일이다. 나머지 키는 `C_C++_빌드가이드.txt`(gvim)와 `Emacs_키보드가이드.md`(Emacs)에 있다.
+대상은 마지막으로 연 `.c` 또는 `.cpp` 파일이다. 나머지 키는 `Gvim_키보드가이드.docx`, `C_C++_빌드가이드.txt`(gvim)와 `Emacs_키보드가이드.md`(Emacs)에 있다.
 
 | 하는 일 | gvim | Emacs |
 |---|---|---|
