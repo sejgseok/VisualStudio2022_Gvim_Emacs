@@ -29,6 +29,7 @@ Emacs를 쓰려면 저장소에 없는 `handmade.emacs`를 따로 넣어야 한�
 | `C_C++_빌드가이드.txt` | gvim 사용법과 키 전체 |
 | `Gvim_키보드가이드.docx` | gvim 키를 키보드만으로 쓰는 방법으로 정리한 Word 가이드(34쪽): 모드, 빌드·실행, 이동, 선택, 복사·삭제, 자동 완성·주석, 검색·치환, 자주 쓰는 작업 순서, Emacs 키 비교 |
 | `Emacs_C_C++_가이드.md`, `Emacs_키보드가이드.md` | Emacs 사용법과 키 전체 |
+| `분할_컴파일_빌드.txt` | 여러 `.c` 파일로 프로그램 하나를 만드는 방법(분할 컴파일): 프로젝트 폴더의 `build.bat`(gvim Alt+m, Emacs `M-x make-without-asking`), 명령줄 `cl`/`link`, `#include "x.c"` 방식, 파일을 나누는 규칙, 링크 오류 해결 |
 
 ## 새 PC에 설치하기
 
