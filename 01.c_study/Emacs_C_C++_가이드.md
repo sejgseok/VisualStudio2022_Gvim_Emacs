@@ -36,6 +36,7 @@
 | `build.bat` | 소스 파일 하나를 빌드한다 (gvim과 함께 씀) |
 | `run.bat` | 프로그램을 실행하고 종료 코드를 보여 준 뒤 키를 기다린다 (gvim과 함께 씀) |
 | `shell.bat` | Visual Studio 2022 x64 컴파일러 환경을 준비한다 (gvim과 함께 씀) |
+| `Turboc.h` | 터보 C 스타일 함수(`clrscr`, `gotoxy`, `delay`, `random` 등) 헤더. 어느 폴더의 소스에서나 `#include "Turboc.h"`로 쓴다([7절](#7-빌드)) |
 | `c\`, `cpp\` | 예제와 내 프로그램. 빌드한 exe는 소스 파일 옆의 `build\` 폴더에 생긴다 (`c\build\01_hello.exe`) |
 
 읽는 순서:
@@ -184,7 +185,8 @@ Handmade Hero의 Emacs와 같다. 일반 Emacs와 다른 키가 많으니 주의
 
 - `.c` 파일은 C17(`-std:c17`), `.cpp` 파일은 C++20(`-std:c++20 -EHsc`)으로 컴파일한다.
 - 디버그 빌드: 최적화 없음(`-Od`), 디버그 정보(`-Z7`), 디버그용 C 런타임(`-MTd`), 실행 중 검사(`-RTC1`: 초기화하지 않은 변수, 스택 손상 등), 경고 수준 4(`-W4`). 경고가 있어도 빌드는 성공한다.
-- 소스를 UTF-8로 읽는다(`-source-charset:utf-8`, [10절](#10-한글-처리)). `scanf`, `strcpy` 같은 교재 함수의 C4996 경고는 끈다.
+- 소스를 UTF-8로 읽는다(`-source-charset:utf-8`, [10절](#10-한글-처리)). `scanf`, `strcpy` 같은 교재 함수와 `getch`, `kbhit` 같은 옛 이름의 C4996 경고는 끈다(`-D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_WARNINGS`).
+- `build.bat`가 있는 폴더를 포함 경로로 넘긴다(`-I`). 그래서 그 폴더의 `Turboc.h`를 `c\`, `cpp\` 등 어느 폴더의 소스에서나 `#include "Turboc.h"`(또는 `<Turboc.h>`)로 쓴다. 함수 목록과 주의할 점은 `C_C++_빌드가이드.txt` 7절, 예제는 `c\04_turboc.c`와 `cpp\03_turboc.cpp`이다. `Turboc.h`는 UTF-8로 바꿔 두었으므로 Emacs에서 열어도 한글 주석이 바르게 보인다.
 - 결과: 소스 파일 옆의 `build\이름.exe` (`c\04_test.c` → `c\build\04_test.exe`)
 
 빌드 결과 창(`*compilation*`):
@@ -286,6 +288,8 @@ Handmade Hero의 Emacs와 같다. 일반 Emacs와 다른 키가 많으니 주의
 | `DevEnvDir is not set. Start Emacs with emacs.bat` | Emacs를 `emacs.bat`가 아닌 방법으로 열었다. `emacs.bat`로 다시 연다 |
 | 빌드 전에 `Save file ...?`를 묻는다 | 저장하지 않은 파일이 있다. `y`(저장) 또는 `!`(모두 저장) |
 | 빌드 결과 창에 `C4828` 경고나 한글이 깨진 오류 | 소스가 UTF-8이 아니다. [10절](#10-한글-처리)의 방법으로 UTF-8로 바꾼다 |
+| `fatal error C1083: 포함 파일을 열 수 없습니다. 'Turboc.h'` | `Turboc.h`가 `build.bat`와 같은 폴더에 없다. 공부 폴더 맨 위에 둔다 |
+| C++에서 `std::max`, `std::min`이 `C2589`로 실패 | `Turboc.h`가 포함한 `windows.h`의 `min`, `max` 매크로 때문이다. `#include "Turboc.h"` 앞에 `#define NOMINMAX`를 적는다 |
 | `M-k`를 누르면 `This command must be called from a menu or a tool bar` | Emacs 31에서 Casey의 `M-k`가 동작하지 않는다. `C-x k RET`로 닫는다 |
 | 실행 창이 닫히지 않는다 | `run.bat`가 결과를 보여 주려고 기다리는 중이다. 아무 키나 누른다 |
 | 여러 파일로 된 프로그램이 `LNK2019`로 실패 | `build.bat`는 파일 하나만 빌드한다([6절](#6-현재-프로그램)) |
@@ -322,4 +326,5 @@ Handmade Hero의 Emacs와 같다. 일반 Emacs와 다른 키가 많으니 주의
   - `c\`, `cpp\`의 `.c`, `.cpp` 파일 7개(예제 5개 포함)를 gvim과 Emacs로 열어 글자마다 글자색을 비교: 모두 같음
   - 편집 키 73개 항목(괄호, 따옴표, `TAB`, 코드 조각, 주석, 줄 편집 등)을 키 입력을 흉내 내어 확인, 새 `.c` 파일의 `main` 틀 안에서 `printf("%d` `TAB` `, 1` `TAB` `;` `RET` `if` `M-e` … 입력, `F7`로 공부 폴더 전체 찾기, `M-m` 빌드 성공
   - `emacs.bat`로 연 Emacs 창에 글자 입력 메시지를 보내 새 `.cpp`의 `main` 안에 `foo(bar` `TAB` `;` … 가 gvim과 같은 결과가 되는 것
+- **Turboc.h(2026-11-17):** 임시 복사본에서 `c\04_turboc.c`를 `M-m`으로 빌드해 경고 없이 `finished`, `Turboc.h`가 `utf-8-dos`로 열리고 한글 주석이 바르게 보이는 것
 - 확인하지 않은 것: Visual Studio 안에서의 실제 단계 실행과 작업 디렉터리, 실제 키보드로 누르는 조작(Emacs 안에서 키 입력을 흉내 내어 확인), CP949 소스 변환, `S-F5`로 끝낸 뒤 실행 창에 보이는 종료 코드

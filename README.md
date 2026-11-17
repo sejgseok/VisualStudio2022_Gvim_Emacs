@@ -16,15 +16,16 @@ Emacs를 쓰려면 저장소에 없는 `handmade.emacs`를 따로 넣어야 한�
 | 파일 | 역할 |
 |---|---|
 | `shell.bat` | Visual Studio 2022 x64 컴파일러 환경을 연다(Community, Professional, Enterprise, BuildTools 순서로 찾는다) |
-| `build.bat` | `build.bat c\01_hello.c` → `c\build\01_hello.exe`. `.c`는 C17, `.cpp`는 C++20, `-W4`, 최적화 없음, 디버그 정보 포함 |
+| `build.bat` | `build.bat c\01_hello.c` → `c\build\01_hello.exe`. `.c`는 C17, `.cpp`는 C++20, `-W4`, 최적화 없음, 디버그 정보 포함. 이 폴더를 포함 경로(`-I`)로 넘긴다 |
 | `run.bat` | 프로그램을 실행하고 종료 코드를 보여 준 뒤 키를 기다린다 |
 | `gvim.bat`, `gvim_c_study.vim` | gvim을 시작하고, 마지막으로 연 `.c`/`.cpp` 파일을 빌드·실행·디버그하는 키와 새 파일 틀을 더한다 |
 | `gvim_handmade.vim` | gvim 공통 설정: Alt 키 편집 명령, 어두운 테마, JetBrainsMono 글꼴(없으면 Consolas), Ctrl+마우스 휠 글꼴 크기, 괄호 짝 넣기, 코드 조각, 오류 이동 |
 | `emacs.bat`, `emacs_c_study.el` | Emacs를 시작하고 gvim과 같은 빌드·실행·디버그 키를 더한다 |
 | `emacs_theme.el`, `emacs_edit.el` | Emacs에 gvim과 같은 글꼴·색과 C/C++ 편집 보조 기능을 넣는다(Emacs 기본 기능만 쓴다) |
-| `c\`, `cpp\` | 예제: `c\01_hello.c`, `c\02_input.c`, `c\03_struct_file.c`, `cpp\01_hello.cpp`, `cpp\02_class.cpp` |
-| 연습 파일 | `01_hello.c`, `exam-1.c`, `exam-2.c`, `test.c`, `c%`, `c\exam-1.c`, `c\exam-2.c` |
-| `C_C++_개발환경_구축가이드.docx` | 설치부터 디버깅까지 정리한 Word 가이드(46쪽, 부록에 설정 파일 전문) |
+| `Turboc.h` | 터보 C 스타일 함수(`clrscr`, `gotoxy`, `delay`, `random` 등) 헤더. 어느 폴더의 소스에서나 `#include "Turboc.h"`로 쓴다([아래](#turboch-터보-c-스타일-함수)) |
+| `c\`, `cpp\` | 예제: `c\01_hello.c`, `c\02_input.c`, `c\03_struct_file.c`, `c\04_turboc.c`, `cpp\01_hello.cpp`, `cpp\02_class.cpp`, `cpp\03_turboc.cpp` |
+| 연습 파일 | `01_hello.c`, `exam-1.c`, `exam-2.c`, `exam-3.c`, `test.c`, `c%`, `c\exam-1.c`, `c\exam-2.c`, `c\exam-3.c` |
+| `C_C++_개발환경_구축가이드.docx` | 설치부터 디버깅까지 정리한 Word 가이드(49쪽, 부록에 설정 파일 전문) |
 | `C_C++_빌드가이드.txt` | gvim 사용법과 키 전체 |
 | `Emacs_C_C++_가이드.md`, `Emacs_키보드가이드.md` | Emacs 사용법과 키 전체 |
 
@@ -76,6 +77,33 @@ Emacs를 쓰려면 저장소에 없는 `handmade.emacs`를 따로 넣어야 한�
 | 파일 열기 | Alt+f | M-f |
 | 글꼴 크기 | Ctrl+마우스 휠 | Ctrl+마우스 휠 |
 
+## Turboc.h (터보 C 스타일 함수)
+
+`01.c_study\Turboc.h`는 『혼자 연구하는 C/C++』(김상형)의 도우미 헤더이다. 터보 C의 화면 함수를 Windows 콘솔 API로 만들어 Visual Studio에서 쓸 수 있게 한다. `build.bat`가 자기 폴더를 포함 경로(`-I`)로 넘기므로 `c\`, `cpp\` 등 어느 폴더의 소스에서나 다음 한 줄로 쓴다(`#include <Turboc.h>`도 된다).
+
+```c
+#include "Turboc.h"
+```
+
+| 함수, 매크로 | 하는 일 |
+|---|---|
+| `clrscr()` | 화면을 지운다(`system("cls")`) |
+| `gotoxy(x, y)` | 커서를 x열, y행으로 옮긴다. 왼쪽 위가 0, 0이다(터보 C는 1, 1이었다) |
+| `wherex()`, `wherey()` | 커서의 x, y 좌표 |
+| `setcursortype(모양)` | `NOCURSOR`(숨김), `SOLIDCURSOR`(꽉 찬 모양), `NORMALCURSOR`(보통) |
+| `delay(n)` | n/1000초 기다린다(`Sleep`) |
+| `randomize()`, `random(n)` | 난수 발생기를 현재 시각으로 초기화 / 0부터 n-1까지의 난수 |
+
+- 예제: `c\04_turboc.c`(화면 아무 곳에나 별 찍기, 키를 누르면 끝), `cpp\03_turboc.cpp`(C++에서 쓰기, `kbhit`로 키를 누를 때까지).
+  ```powershell
+  .\build.bat c\04_turboc.c
+  .\run.bat c\build\04_turboc.exe
+  ```
+- `Turboc.h`가 `stdio.h`, `stdlib.h`, `conio.h`, `time.h`, `windows.h`를 포함하므로 `printf`, `getch`, `kbhit`, `Sleep`은 따로 포함하지 않아도 된다. `getch`, `kbhit`의 C4996 경고는 `build.bat`의 `-D_CRT_NONSTDC_NO_WARNINGS`가 끈다.
+- 함수 본문이 헤더 안에 있다. 파일 하나가 프로그램 하나인 이 폴더에서는 그대로 쓰면 된다. 여러 `.c` 파일을 따로 컴파일해 링크한다면 한 파일 말고는 `#define TURBOC_PROTOTYPE_ONLY`를 먼저 적어 원형만 포함한다.
+- `windows.h`의 `min`, `max` 매크로 때문에 C++에서 `std::max`나 `numeric_limits<int>::max()`가 C2589 오류로 실패한다. `#include "Turboc.h"` 앞에 `#define NOMINMAX`를 적는다.
+- 책의 원래 파일(CP949)을 이 환경에 맞춰 UTF-8로 바꾸고, `gotoxy`에서 `int`를 `SHORT`에 넣는 두 줄에 `(SHORT)`를 붙였다(`-W4`의 C4244 경고). 나머지는 원래 파일과 같다.
+
 ## Emacs를 쓰려면: handmade.emacs
 
 `emacs_c_study.el`은 먼저 같은 폴더의 `handmade.emacs`를 읽는다. 이 파일은 Handmade Hero(Casey Muratori, Molly Rocket) 강의의 Emacs 설정(`.emacs`)을 이 환경에 맞춘 사본이라, 저작권 때문에 저장소에 넣지 않았다(`.gitignore`에도 적어 실수로 올라가지 않게 했다). 없으면 Emacs가 `handmade.emacs was not found in ...` 오류를 낸다. gvim과 명령줄에는 필요 없다.
@@ -104,4 +132,5 @@ Handmade Hero 원본 zip에 들어 있는 2014년 `.emacs`는 이 파일과 다�
 
 - Handmade Hero(Casey Muratori, Molly Rocket)의 소스, 아트, 에셋 파일, `.emacs`와 그것으로 만든 파일은 개인 학습용 라이선스라 이 저장소에 넣지 않는다.
 - `gvim_handmade.vim`, `emacs_theme.el`, `emacs_edit.el`, `emacs_c_study.el`은 Handmade Hero의 Emacs 키 배치와 동작을 흉내 내어 새로 쓴 파일이다. Casey의 코드는 들어 있지 않다.
+- `Turboc.h`는 『혼자 연구하는 C/C++』(김상형) 책의 도우미 헤더이다. 원래 파일의 저작권은 저자에게 있다. 이 저장소의 것은 인코딩(UTF-8)과 `gotoxy`의 `(SHORT)` 두 곳, 그 사실을 적은 주석 한 줄만 다르다.
 - Space Galaga, 예제, 연습 파일은 이 저장소 주인의 것이다.

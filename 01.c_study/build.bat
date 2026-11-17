@@ -47,8 +47,14 @@ rem literals stay in the Windows code page (949 on Korean Windows), so Korean
 rem text prints correctly in the console and scanf reads Korean input.
 rem -D_CRT_SECURE_NO_WARNINGS: textbook functions such as scanf and strcpy
 rem compile without warning C4996.
-set CommonCompilerFlags=-nologo -FC -Z7 -Od -MTd -RTC1 -W4 -source-charset:utf-8 -D_CRT_SECURE_NO_WARNINGS
+rem -D_CRT_NONSTDC_NO_WARNINGS: the old names that Turbo C style programs use,
+rem such as getch and kbhit (conio.h), compile without warning C4996 too.
+set CommonCompilerFlags=-nologo -FC -Z7 -Od -MTd -RTC1 -W4 -source-charset:utf-8 -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_WARNINGS
 set CommonLinkerFlags=-incremental:no user32.lib gdi32.lib
+rem The folder of build.bat is an include folder (-I), so #include "Turboc.h"
+rem (and any header kept next to build.bat) works from sources in c\, cpp\ or
+rem any other folder.
+set "IncludeDir=%~dp0."
 
 set "build_dir=%source_dir%build"
 if not exist "%build_dir%\" mkdir "%build_dir%"
@@ -62,7 +68,7 @@ popd
 exit /b 1
 
 :compile
-cl %CommonCompilerFlags% %LanguageFlags% "%source%" -Fe"%name%.exe" /link %CommonLinkerFlags%
+cl %CommonCompilerFlags% %LanguageFlags% -I"%IncludeDir%" "%source%" -Fe"%name%.exe" /link %CommonLinkerFlags%
 set "status=%errorlevel%"
 popd
 if "%status%"=="0" echo Built %build_dir%\%name%.exe

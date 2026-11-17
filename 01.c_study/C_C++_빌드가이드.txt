@@ -21,6 +21,7 @@ emacs_edit.el          Emacs C/C++ 편집 기능 (gvim과 같게: 괄호 자동 
 build.bat             .c 또는 .cpp 파일 하나를 빌드한다
 run.bat                프로그램을 실행하고, 끝나면 종료 코드를 보여 준 뒤 키 입력을 기다린다
 shell.bat              Visual Studio 2022 x64 컴파일러 환경 준비
+Turboc.h               터보 C 스타일 함수(clrscr, gotoxy, delay, random 등) 헤더 (7절)
 c\, cpp\               C 예제, C++ 예제
 <소스 폴더>\build\      빌드 결과(이름.exe, .obj, .pdb). 지워도 다시 빌드하면 생긴다
 C_C++_빌드가이드.txt     이 문서
@@ -31,8 +32,11 @@ Emacs_C_C++_가이드.md  Emacs로 쓰는 방법
 c\01_hello.c           printf 출력, 자료형 크기, 반복문, 함수
 c\02_input.c           scanf로 이름(한글)과 정수 입력, 합계와 평균
 c\03_struct_file.c     구조체 배열, 포인터, qsort, malloc, 파일 쓰기와 읽기
+c\04_turboc.c          Turboc.h: clrscr, gotoxy, wherex/wherey, setcursortype, delay,
+                       random, getch로 화면 아무 곳에나 별 찍기
 cpp\01_hello.cpp       iostream, string, vector, 범위 for, 람다, sort, std::format
 cpp\02_class.cpp       클래스, 생성자와 소멸자, 연산자 오버로딩, 템플릿, unique_ptr
+cpp\03_turboc.cpp      C++에서 Turboc.h 쓰기: 키를 누를 때까지(kbhit) 화면에 찍기
 
 필요한 프로그램
 - Visual Studio 2022   "C++를 사용한 데스크톱 개발" 워크로드. C:\Program Files\Microsoft
@@ -209,6 +213,7 @@ Vim에는 입력 모드와 일반 모드가 있다. i나 a로 입력을 시작�
 7. 빌드 옵션 (build.bat)
 
 cl -nologo -FC -Z7 -Od -MTd -RTC1 -W4 -source-charset:utf-8 -D_CRT_SECURE_NO_WARNINGS
+   -D_CRT_NONSTDC_NO_WARNINGS -I"<build.bat가 있는 폴더>"
    .c 파일    -std:c17
    .cpp 파일  -std:c++20 -EHsc -Zc:__cplusplus
 link -incremental:no user32.lib gdi32.lib
@@ -222,6 +227,9 @@ link -incremental:no user32.lib gdi32.lib
   -W4                          경고 수준 4. 경고는 표시되지만 빌드를 멈추지 않는다
   -source-charset:utf-8        소스를 UTF-8로 읽는다 (8절)
   -D_CRT_SECURE_NO_WARNINGS    scanf, strcpy 등을 쓸 때 나오는 C4996 경고를 끈다
+  -D_CRT_NONSTDC_NO_WARNINGS   getch, kbhit 등 옛 이름을 쓸 때 나오는 C4996 경고를 끈다
+  -I"<build.bat가 있는 폴더>"   그 폴더의 헤더(Turboc.h 등)를 어느 폴더의 소스에서나
+                               #include로 쓴다
   -std:c17, -std:c++20         C17, C++20 표준
   -EHsc                        C++ 예외 처리 (iostream 등에 필요)
   -Zc:__cplusplus              __cplusplus 값을 실제 표준(202002)으로 표시
@@ -230,6 +238,35 @@ link -incremental:no user32.lib gdi32.lib
 -WX가 없어서 경고가 있어도 빌드된다. 경고도 빌드 결과 창에 나오고 F9로 이동할 수
 있으므로 읽고 고치는 습관을 들인다. 옵션을 바꾸려면 build.bat의 CommonCompilerFlags와
 LanguageFlags 줄을 고친다.
+
+Turboc.h (터보 C 스타일 함수)
+
+이 폴더 맨 위의 Turboc.h는 『혼자 연구하는 C/C++』(김상형)의 도우미 헤더이다. 터보 C의
+화면 함수를 Windows 콘솔 API로 만들어 Visual Studio에서 쓸 수 있게 한다. build.bat가
+이 폴더를 포함 경로(-I)로 넘기므로 c\, cpp\ 등 어느 폴더의 소스에서나 다음 한 줄로
+쓴다(#include <Turboc.h>도 된다). 예제는 c\04_turboc.c와 cpp\03_turboc.cpp이다.
+
+   #include "Turboc.h"
+
+  clrscr()                 화면을 지운다 (system("cls"))
+  gotoxy(x, y)             커서를 x열, y행으로 옮긴다. 왼쪽 위가 0, 0이다
+                           (터보 C의 gotoxy는 1, 1이 왼쪽 위였다)
+  wherex(), wherey()       커서의 x, y 좌표
+  setcursortype(모양)       NOCURSOR(숨김), SOLIDCURSOR(꽉 찬 모양), NORMALCURSOR(보통)
+  delay(n)                 n/1000초 기다린다 (Sleep)
+  randomize()              난수 발생기를 현재 시각으로 초기화한다
+  random(n)                0부터 n-1까지의 난수
+
+Turboc.h가 stdio.h, stdlib.h, conio.h, time.h, windows.h를 포함하므로 printf, getch,
+kbhit, Sleep 등은 따로 포함하지 않아도 된다.
+- 함수 본문이 헤더 안에 있다. 소스 파일 하나가 프로그램 하나인 이 폴더에서는 그대로
+  쓰면 된다. 6절처럼 다른 .c 파일을 #include로 합쳐도 Turboc.h는 한 번만 들어간다.
+  여러 .c 파일을 따로 컴파일해서 링크하는 프로젝트라면 한 파일에서만 그대로 포함하고,
+  나머지 파일에서는 #define TURBOC_PROTOTYPE_ONLY를 먼저 적어 함수 원형만 포함한다.
+- windows.h가 min, max 매크로를 만들기 때문에 C++에서 std::max(a, b) 등이 오류가
+  난다. 그럴 때는 #include "Turboc.h" 앞에 #define NOMINMAX를 적는다.
+- 책의 원래 파일은 CP949였다. 이 환경에 맞춰 UTF-8로 바꾸고(8절), gotoxy의 int를
+  SHORT에 넣는 두 줄에 (SHORT)를 붙였다(-W4의 C4244 경고). 나머지는 원래 파일과 같다.
 
 
 8. 한글 처리
@@ -309,6 +346,11 @@ F6을 누르면 Visual Studio가 현재 프로그램을 디버거로 연다(deve
   main이 없는 파일(포함용 .c 등)을 빌드했다. 6절 참고.
 - 한글이 깨지거나 C4828 경고가 많이 나옴
   소스가 CP949로 저장되어 있다. 8절 참고.
+- fatal error C1083: 포함 파일을 열 수 없습니다. 'Turboc.h'
+  Turboc.h가 build.bat와 같은 폴더에 없다. 이 폴더 맨 위에 둔다(7절).
+- std::max, std::min, numeric_limits<...>::max()가 C2589 등의 오류로 실패
+  Turboc.h가 포함한 windows.h의 min, max 매크로 때문이다. #include "Turboc.h" 앞에
+  #define NOMINMAX를 적는다(7절).
 - Visual Studio 2022 C++ tools were not found / vcvarsall.bat was not found at ...
   Visual Studio 2022나 C++ 워크로드가 없거나, shell.bat에 적은 경로가 틀렸다.
   Visual Studio Installer에서 "C++를 사용한 데스크톱 개발"을 확인하거나 13절을 본다.
@@ -337,6 +379,7 @@ F6을 누르면 Visual Studio가 현재 프로그램을 디버거로 연다(deve
   gvim.exe의 전체 경로를 넣는다.
     set "gvim_gui=D:\Tools\Vim\vim92\gvim.exe"
 - 컴파일 옵션: build.bat의 CommonCompilerFlags, LanguageFlags
+- 포함 폴더: build.bat의 set "IncludeDir=" 줄 (기본은 build.bat가 있는 폴더)
 - 글꼴 크기: gvim_handmade.vim의 set guifont=JetBrainsMono_NFM:h12,Consolas:h12 줄에서
   h12 두 곳을 바꾼다(예: h14). 지금 창에서만 잠깐 바꿀 때는 Ctrl+마우스 휠을 쓴다.
 - 색: gvim_handmade.vim의 highlight 줄
@@ -386,6 +429,22 @@ F6을 누르면 Visual Studio가 현재 프로그램을 디버거로 연다(deve
   비교. 글꼴 JetBrainsMono NFM 12, 낱말별 색, 현재 줄, 짝 괄호, 한글 모양이 같았다.
 - Ctrl+마우스 휠: 실제 Ctrl+휠 입력으로 크기 변경, 6과 40 한계, Consolas만 있을 때,
   최대화한 창과 보통 창에서 창 크기가 그대로인 것
+
+2026-11-17에 Turboc.h를 넣으면서 다음을 확인했다.
+
+- 예전 build.bat: c\, cpp\의 소스와 #include <Turboc.h>는 C1083으로 실패. 포함 경로만
+  더하면 CP949 주석 때문에 C4828 경고가 한 번 빌드에 170개, gotoxy에서 C4244 2개,
+  C++에서 getch, kbhit에 C4996이 나왔다
+- 지금 build.bat: 맨 위, c\, cpp\, c\ 아래 폴더의 소스, "Turboc.h"와 <Turboc.h>,
+  C와 C++ 모두 경고 없이 빌드. 기존 예제 5개는 예전과 같은 결과(경고 없음)
+- c\04_turboc.c, cpp\03_turboc.cpp를 콘솔 창에서 실행하고 화면을 읽어 확인: 별이
+  출력한 좌표에 찍히고, 한글이 바르게 나오고, 누른 키(x)의 코드 120, kbhit로 멈춤,
+  키를 누르지 않으면 5초 뒤 끝남, 종료 코드 0
+- 임시 복사본에서 gvim Alt+m(build ok, 경고 없음), 오류를 넣은 파일의 F9(그 소스의
+  오류 줄로 이동), Emacs M-m(경고 없음), Emacs가 Turboc.h를 UTF-8로 열어 한글 주석이
+  바르게 보이는 것
+- NOMINMAX: windows.h 때문에 std::max와 numeric_limits<int>::max()가 C2589로 실패하고,
+  #include "Turboc.h" 앞에 #define NOMINMAX를 적으면 빌드됨
 
 확인하지 못한 것: 실제 다른 PC 설치, Visual Studio Professional 등 다른 에디션과
 Vim 9.0/9.1, 한국어가 아닌 Windows, 한글이 들어간 폴더 경로, Visual Studio에서

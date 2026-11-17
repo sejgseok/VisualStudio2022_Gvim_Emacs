@@ -5,7 +5,8 @@
 #include <string.h> // strlen(str)
 // 응용 실습 문제
 // fibonacci 수열을 재귀 함수 이용하여 작성
-int fibo(int* a, int n);
+int fibo_r(int n);
+void fibo(int* a, int n);
 int display(int* a, int n);
 int main(void)
 {
@@ -18,11 +19,20 @@ int main(void)
 
     return 0;
 }
-int fibo(int* a, int n)
+
+int fibo_r(int n)
 {
-
-
-
+   if (n < 2) // n = 1 -> 1, n = 0 -> 1 
+       return 1;
+   return fibo_r(n-2) + fibo_r(n-1);
+}
+void fibo(int* a, int n)
+{
+    int i;
+    for (i = 0; i < n; i++)
+    {
+        a[i] = fibo_r(i);
+    }
 }
 int display(int* a, int n)
 {
